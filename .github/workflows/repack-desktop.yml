@@ -1,0 +1,81 @@
+name: Assemble verified desktop release
+on:
+  workflow_dispatch:
+    inputs:
+      base_tag:
+        description: Existing verified base release tag
+        required: true
+      target_tag:
+        description: Unpublished target release tag
+        required: true
+      base_sha:
+        description: SHA256 of the complete base ZIP
+        required: true
+      patch_sha:
+        description: SHA256 of desktop-update.zip
+        required: true
+      script_sha:
+        description: SHA256 of repack-desktop.py
+        required: true
+      target_sha:
+        description: Expected SHA256 of the complete rebuilt ZIP
+        required: true
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BASE_TAG: ${{ inputs.base_tag }}
+      TARGET_TAG: ${{ inputs.target_tag }}
+      BASE_SHA: ${{ inputs.base_sha }}
+      PATCH_SHA: ${{ inputs.patch_sha }}
+      SCRIPT_SHA: ${{ inputs.script_sha }}
+      TARGET_SHA: ${{ inputs.target_sha }}
+    steps:
+      - name: Validate inputs and require an unpublished target
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os,re
+          for key in ('BASE_TAG','TARGET_TAG'):
+              assert re.fullmatch(r'v\d+\.\d+\.\d+',os.environ[key]),key
+          for key in ('BASE_SHA','PATCH_SHA','SCRIPT_SHA','TARGET_SHA'):
+              assert re.fullmatch(r'[a-f0-9]{64}',os.environ[key]),key
+          assert os.environ['BASE_TAG'] != os.environ['TARGET_TAG']
+          PY
+          test "$(gh release view "$TARGET_TAG" --json isDraft --jq .isDraft)" = true
+      - name: Download only verified release inputs
+        shell: bash
+        run: |
+          gh release download "$BASE_TAG" --pattern "CampusCommerceLab-${BASE_TAG#v}-windows-x64.zip" --output base.zip
+          gh release download "$TARGET_TAG" --pattern desktop-update.zip --output desktop-update.zip
+          gh release download "$TARGET_TAG" --pattern repack-desktop.py --output repack-desktop.py
+          python3 - <<'PY'
+          import hashlib,os,pathlib
+          for name,key in [('base.zip','BASE_SHA'),('desktop-update.zip','PATCH_SHA'),('repack-desktop.py','SCRIPT_SHA')]:
+              with pathlib.Path(name).open('rb') as stream:
+                  assert hashlib.file_digest(stream,'sha256').hexdigest()==os.environ[key],name
+          PY
+      - name: Assemble without recompressing or executing the application
+        shell: bash
+        run: |
+          python3 repack-desktop.py base.zip desktop-update.zip complete.zip
+          python3 - <<'PY'
+          import hashlib,os,pathlib
+          name='CampusCommerceLab-'+os.environ['TARGET_TAG'][1:]+'-windows-x64.zip'
+          with pathlib.Path('complete.zip').open('rb') as stream:
+              digest=hashlib.file_digest(stream,'sha256').hexdigest()
+          assert digest==os.environ['TARGET_SHA'],'Rebuilt archive differs from the locally verified archive'
+          pathlib.Path('complete.zip').rename(name)
+          pathlib.Path('SHA256SUMS.txt').write_text(digest+'  '+name+'\n',encoding='utf-8')
+          PY
+      - name: Upload the verified complete archive to the draft
+        shell: bash
+        run: |
+          test "$(gh release view "$TARGET_TAG" --json isDraft --jq .isDraft)" = true
+          gh release upload "$TARGET_TAG" "CampusCommerceLab-${TARGET_TAG#v}-windows-x64.zip" SHA256SUMS.txt --clobber
+          echo 'Verified complete archive uploaded. Release remains unpublished.'
