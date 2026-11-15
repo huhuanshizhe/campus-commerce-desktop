@@ -1,27 +1,24 @@
-# 远航实训 Windows 客户端
+# 安途知行 · 途小智本机运营助手
 
-高校跨境电商实训的本机运营助手。教师在教学网页发布任务，学生通过本机 Octop 执行并逐步确认浏览器动作，成果回到作业与评分流程。
+安途知行 · 途小智 0.2.1，面向高校跨境电商实训。
 
-- 教学平台：https://campus-commerce-lab.vercel.app/
-- 学生启用指南：https://campus-commerce-lab.vercel.app/student-guide
-- 最新下载：https://github.com/huhuanshizhe/campus-commerce-desktop/releases/latest
+本版打通“老师布置作业 → 学生选择云登环境 → 逐步确认商品读取 → 修订提交 → 老师退回、评分、导出”的流程。已在授权的云登1号和正式教学网站完成指定 SKU 的真实页面验收。
 
-## 启用
+- 新增云登环境序号及现有商品标签页选择，保留已有云登窗口。
+- 新增“亚马逊商品检查”，只读取目标 SKU 唯一匹配的商品行，不修改店铺，不发送整页截图。模型可核对已显示的标题、SKU、ASIN；未显示的价格、库存和状态列为待核查。
+- 读取前由学生确认；老师可查看运行环境、原始成果与确认记录。
+- 包含 Octop、Python、Node 等运行环境，无需学生自行安装或填写模型密钥。
+- 统一安途知行品牌与途小智吉祥物。
 
-1. 下载 Windows x64 ZIP 并完整解压。
-2. 双击“启动远航实训.vbs”；若系统禁用 VBScript，使用同目录的 CMD 启动文件。
-3. 在教学网页“设置与账号”生成配对码，在客户端粘贴绑定，点击开始接收任务。
-4. 网页选择任务、专家与这台本机。电脑需已有 Chrome 或 Edge；无需另装 Python、Node、Git 或填写模型密钥。
-5. 浏览器动作会逐次暂停确认。密码、验证码和 MFA 在本机专用浏览器亲自处理。
+下载 ZIP 后完整解压，双击“启动途小智.vbs”。系统禁用 VBScript 时运行“启动途小智.cmd”。在教学网页“设置”生成配对码，并在客户端“账号与浏览器”绑定。云登模式需先打开获授权环境和 Seller Central 商品页，再填写环境序号与网址。
 
-## 当前范围
+商品资料会发送至学校配置的模型服务，使用真实店铺前须取得负责人授权。登录 Cookie、浏览器档案和控制地址不回传教学平台。
 
-三个内容专家、亚马逊页面实操、设备绑定、必要执行依据回传和教学提交评分。首个实测平台为 Amazon Seller Central；首次真实店铺流程建议检查、填写并停在保存前。真实授权店铺发布仍需实际验收，不提供自动发布或付费操作。
+首版检查不自动滚动，需本人调整页面；无法唯一定位 SKU 时停止。商品上架、价格库存修改、广告投放、客服发送、定时运营与其他平台不在本版验收范围。
 
-每位学生使用独立 Windows 用户。设备凭据使用 Windows DPAPI 保存；数据默认位于 LocalAppData/CampusCommerceLab。任务资料和专家读取的页面内容会交由学校配置的模型处理，必要成果回传教学平台。停止时请核对页面实际状态，中断动作不会自动重做。
+[进入教学平台](https://campus-commerce-lab.vercel.app/) · [学生启用指南](https://campus-commerce-lab.vercel.app/student-guide)
 
-## 开源组件
+下载包 SHA-256 请对照随包 SHA256SUMS.txt。
 
-复用 [TencentCloud/Octop](https://github.com/TencentCloud/Octop) 和 [TencentCloud/octop-browser](https://github.com/TencentCloud/octop-browser)，以及 Octop Harness、CPython、Node.js 和其依赖。包内附 MIT 等组件许可证、依赖版本清单与上游提交记录。Windows 输入框替换修复补丁随包提供。
 
-本仓库仅用于客户端分发；发布包不包含学校密钥、学生账号、数据库或店铺登录资料。下载页附 SHA256SUMS.txt，可验证文件完整性。
+[下载最新版本与校验文件](https://github.com/huhuanshizhe/campus-commerce-desktop/releases/latest)
